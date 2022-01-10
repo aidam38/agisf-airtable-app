@@ -1,4 +1,5 @@
 import { Map, List } from "immutable";
+import { shuffleImmutable, wait } from "./util";
 
 function canPersonMeet(person, time) {
     for (const i of person.timeeAv) {
@@ -140,7 +141,42 @@ function makeCohorts(groups, config) {
 
 }
 
+function generateRandomSolution({ facilitators, participants }, cohortNumbers, config) {
+    facilitators = shuffleImmutable(facilitators)
+    participants = shuffleImmutable(participants)
+
+    let cohorts = []
+    cohortNumbers.forEach(n => {
+        let cohort = Map({
+            facilitator: facilitators.first(),
+            participants: participants.take(n),
+        })
+        facilitators = facilitators.shift();
+        participants = participants.skip(n)
+        cohorts.push(cohort)
+    })
+    return List(cohorts)
+}
+
+
 //                      input                       , config
-export function solve({ facilitators, participants }, config, uilog) {
-    console.log(facilitators.toJS(), participants.toJS());      
+export async function solve({ facilitators, participants }, config, uilog) {
+    let cohortCounts = coinProblem(participants.size, config.cohortSizes)
+    if (!cohortCounts) {
+        return { error: "Couldn't partition the number of participants into cohorts of the right sizes. Consider adding more participants to the view or adding more possible cohort sizes" }
+    }
+
+    if (facilitators.length >= cohortCounts.reduce((ag, c) => ag + c, 0)) {
+        return { error: "Not enough facilitators." }
+    }
+
+    let cohortNumbers = []
+    for (let i = 0; i < cohortCounts.length; i++) {
+        cohortNumbers = cohortNumbers.concat(Array(cohortCounts[i]).fill(config.cohortSizes[i]));
+    }
+
+    let solution = generateRandomSolution({ facilitators, participants }, cohortNumbers, config)
+
+    return solution;
+
 }

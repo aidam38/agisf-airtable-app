@@ -1,4 +1,4 @@
-import { parseTimeAvString, genererateAllCoords, generateAllTimes, stringifyTime } from './util';
+import { parseTimeAvString, genererateAllCoords, generateAllTimes, stringifyTime } from '../lib/util';
 import React from 'react';
 import {
     useBase,

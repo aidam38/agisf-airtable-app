@@ -8,7 +8,7 @@ import {
     useBase,
     useRecords
 } from "@airtable/blocks/ui";
-import { parseTimeAvString, parseTimeAvString2, findSolution, findMeetings, stringifyIntervalRich, fitSolution, wait } from "./util"
+import { parseTimeAvString, parseTimeAvString2, findSolution, findMeetings, stringifyIntervalRich, fitSolution, wait } from "../lib/util"
 import { Set, Map, List } from 'immutable';
 import { solve } from "../lib/algorithm"
 
@@ -89,7 +89,7 @@ function Solver({ participants, facilitators, config }) {
 
     return (
         <div className="space-y-2">
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center">
                 {!running ?
                     <Button
                         variant='secondary'
@@ -97,20 +97,20 @@ function Solver({ participants, facilitators, config }) {
                         onClick={async () => {
                             setConsole("")
                             setRunning(true)
-                            addResult(await findSolution(input, config))
+                            addResult(await solve(input, config, uilog))
                             currentResultLast()
                             setRunning(false)
                             setConsole("")
                         }}>Run algorithm</Button>
                     : <Button
                         variant='secondary'
-                        icon="stop"
+                        icon="italic"
                         onClick={async () => {
                             setRunning(false)
                             setConsole("")
                         }}>Stop algorithm</Button>
                 }
-                <span className="italic">{console}</span>
+                <span className="font-mono">{console}</span>
             </div>
             {currentResult >= 0 && results[currentResult] &&
                 <React.Fragment>

@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Set, Map, List, Range } from 'immutable';
-import { Combination } from './combinatorics.js';
+import { Combination } from '../frontend/combinatorics.js';
 
 export async function wait(time) {
     if (!time) { time = 1000 }
@@ -244,7 +244,7 @@ function shuffle(array) {
     return array;
 }
 
-function shuffleImmutable(array) {
+export function shuffleImmutable(array) {
     return List(shuffle(array.toArray()))
 }
 
