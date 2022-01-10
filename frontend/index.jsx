@@ -13,7 +13,7 @@ import {
 import { Tab } from '@headlessui/react'
 import { Set, Map } from 'immutable';
 import { Settings } from './settings'
-import { Algorithm } from './algorithm';
+import { Scheduling } from './scheduling';
 import { View } from './view';
 import { Test } from './test';
 
@@ -59,7 +59,7 @@ function App() {
             <Tab.Panels className="p-4 bg-slate-50 h-screen">
                 {isConfigured &&
                     <React.Fragment>
-                        <Tab.Panel><Algorithm /></Tab.Panel>
+                        <Tab.Panel><Scheduling /></Tab.Panel>
                         <Tab.Panel><View /></Tab.Panel>
                         <Tab.Panel><Test /></Tab.Panel>
                     </React.Fragment>}

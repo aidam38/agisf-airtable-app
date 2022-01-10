@@ -8,8 +8,9 @@ import {
     useBase,
     useRecords
 } from "@airtable/blocks/ui";
-import { parseTimeAvString, findSolution, findMeetings, stringifyIntervalRich, fitSolution } from "./util"
+import { parseTimeAvString, parseTimeAvString2, findSolution, findMeetings, stringifyIntervalRich, fitSolution, wait } from "./util"
 import { Set, Map, List } from 'immutable';
+import { solve } from "../lib/algorithm"
 
 function PersonBlob({ name }) {
     return (
@@ -18,12 +19,10 @@ function PersonBlob({ name }) {
 }
 
 function Solution({ solution, config }) {
-    const fit = fitSolution(solution, config)
     const cohorts = solution.map(cohort => cohort.merge(Map({ meetings: findMeetings(cohort, config) })))
 
     return (
         <div>
-            {fit}
             <div className="w-full rounded border border-solid border-gray-200">
                 <div className="flex bg-slate-100 py-1 font-medium">
                     <div className="w-1/5 px-2">Facilitator</div>
@@ -59,7 +58,30 @@ function Solution({ solution, config }) {
 }
 
 function Solver({ participants, facilitators, config }) {
-    let [result, setResult] = useState()
+    let [results, setResults] = useState([])
+    const addResult = result => {
+        setResults(results.concat([result]))
+    }
+
+    let [currentResult, setCurrentResult] = useState(0)
+    const decCurrentResult = () => {
+        if (currentResult > 0) {
+            setCurrentResult(currentResult - 1)
+        }
+    }
+    const incCurrentResult = () => {
+        if (currentResult < results.length - 1) {
+            setCurrentResult(currentResult + 1)
+        }
+    }
+
+    const currentResultLast = () => {
+        setCurrentResult(results.length)
+    }
+
+    let [running, setRunning] = useState(false)
+    let [console, setConsole] = useState()
+    const uilog = (out) => setConsole(out)
     const input = {
         facilitators: facilitators,
         participants: participants
@@ -67,12 +89,63 @@ function Solver({ participants, facilitators, config }) {
 
     return (
         <div className="space-y-2">
-            <Button variant="secondary" icon="play" onClick={async () => setResult(await findSolution(input, config))}>
+            <div className="flex space-x-2">
+                {!running ?
+                    <Button
+                        variant='secondary'
+                        icon="play"
+                        onClick={async () => {
+                            setConsole("")
+                            setRunning(true)
+                            addResult(await findSolution(input, config))
+                            currentResultLast()
+                            setRunning(false)
+                            setConsole("")
+                        }}>Run algorithm</Button>
+                    : <Button
+                        variant='secondary'
+                        icon="stop"
+                        onClick={async () => {
+                            setRunning(false)
+                            setConsole("")
+                        }}>Stop algorithm</Button>
+                }
+                <span className="italic">{console}</span>
+            </div>
+            {currentResult >= 0 && results[currentResult] &&
+                <React.Fragment>
+                    <Solution solution={results[currentResult]} config={config} />
+                    <div className="flex justify-between">
+                        <div>
+                            {results.length > 1 &&
+                                <div>
+                                    <Button icon="chevronLeft" onClick={decCurrentResult}></Button>
+                                    {currentResult + 1}/{results.length}
+                                    <Button icon="chevronRight" onClick={incCurrentResult}></Button>
+                                </div>}
+                        </div>
+                        <Button>Accept</Button>
+                    </div>
+                </React.Fragment>
+            }
+        </div >
+    )
+
+    return (
+        <div className="space-y-2">
+            <Button variant="secondary"
+                icon="play"
+                onClick={async () => {
+                    setConsole("")
+                    setRunning(true)
+                    setResult(await solve(input, config, null))
+                    setRunning(false)
+                }}>
                 Run algorithm
             </Button>
-            {result ?
+            {running ?
                 <div className="space-y-2">
-                    <Solution solution={result} config={config}/>
+                    <Solution solution={result} config={config} />
                     <div className="flex justify-end">
                         <Button icon="right" onClick={() => console.log(result?.toJS())}>Accept</Button>
                     </div>
@@ -82,7 +155,7 @@ function Solver({ participants, facilitators, config }) {
         </div>)
 }
 
-export function Algorithm() {
+export function Scheduling() {
     const base = useBase()
     const globalConfig = useGlobalConfig()
     const facilitatorTable = base.getTableById(globalConfig.get("facilitatorTable"))
@@ -96,6 +169,7 @@ export function Algorithm() {
     let facilitators;
     let participants;
     let config;
+
     if (isConfigured) {
         // get an array of facilitators and participants
         const facilitatorView = facilitatorTable.getViewById(globalConfig.get("facilitatorTableView"))
@@ -106,7 +180,7 @@ export function Algorithm() {
                 return Map({
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString(record.getCellValue(globalConfig.get("facilitatorTableTimeAvField")), increment)
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("facilitatorTableTimeAvField")), increment)
                 })
             }))
 
@@ -115,7 +189,7 @@ export function Algorithm() {
                 return Map({
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString(record.getCellValue(globalConfig.get("participantsTableTimeAvField")), increment)
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("participantsTableTimeAvField")), increment)
                 })
             }))
 
@@ -126,6 +200,7 @@ export function Algorithm() {
             increment: increment
         }
     }
+
 
     return (
         <div>

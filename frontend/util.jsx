@@ -2,6 +2,11 @@ import _ from 'lodash';
 import { Set, Map, List, Range } from 'immutable';
 import { Combination } from './combinatorics.js';
 
+export async function wait(time) {
+    if (!time) { time = 1000 }
+    await new Promise(r => setTimeout(r, time));
+}
+
 const dayMapping = {
     "M": 0,
     "T": 1,
@@ -133,6 +138,26 @@ export function parseTimeAvString(timeav, increment) {
     return timeav.split(", ")
         .map(ts => parseInterval(ts))
         .reduce((coords, interval) => coords.concat(generateCoords(interval, increment)), Set())
+}
+
+function parseTime2(time) {
+    let [hours, minutes] = time.split(":")
+    return parseInt(hours) + parseInt(minutes) / 60
+}
+
+function parseInterval2(interval, multiplier) {
+    const [a, d1, t1, d2, t2] = interval.match(/(M|T|W|R|F|S|U)(\d+:\d+) (M|T|W|R|F|S|U)(\d+:\d+)/) || []
+    return [[d1, t1], [d2, t2]].map(([d, t]) => {
+        const [hours, minutes] = t.split(":")
+        return dayMapping[d] * 24 + (parseInt(hours) + parseInt(minutes) / 60) * multiplier
+    })
+}
+
+export function parseTimeAvString2(timeAv, increment) {
+    if (!timeAv) return null
+    const multiplier = 1 / durationToHours(increment)
+    return timeAv.split(", ")
+        .map(ts => parseInterval2(ts, multiplier))
 }
 
 function serializeSet(set, increment) {
@@ -354,17 +379,7 @@ export async function findSolution({ facilitators, participants }, config) {
         cohortNumbers = cohortNumbers.concat(Array(cohortCounts[i]).fill(config.cohortSizes[i]));
     }
 
-    let solution;
-    for (let i = 0; i < 1000; i++) {
-        if(i % 10 == 0) {
-            console.log(i);
-        }
-        let _solution = generateRandomSolution({ facilitators, participants }, cohortNumbers, config)
-        if (fitSolution(_solution, config) > fitSolution(solution, config)) {
-            solution = _solution
-            console.log(fitSolution(solution, config));
-        }
-    }
+    let solution = generateRandomSolution({ facilitators, participants }, cohortNumbers, config)
 
     return solution;
 }

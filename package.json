@@ -2,7 +2,6 @@
     "dependencies": {
         "@airtable/blocks": "^1.8.0",
         "@headlessui/react": "^1.4.2",
-        "algorithm": "file:algorithm-0.1.0.tgz",
         "immutable": "^4.0.0",
         "lodash": "^4.17.21",
         "node-polyfill-webpack-plugin": "^1.1.4",
