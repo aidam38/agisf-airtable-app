@@ -1,0 +1,23 @@
+{
+    "dependencies": {
+        "@airtable/blocks": "^1.8.0",
+        "@headlessui/react": "^1.4.2",
+        "algorithm": "file:algorithm-0.1.0.tgz",
+        "immutable": "^4.0.0",
+        "lodash": "^4.17.21",
+        "node-polyfill-webpack-plugin": "^1.1.4",
+        "react": "^16.13.0",
+        "react-dom": "^16.13.0",
+        "tslib": "^2.3.1",
+        "webpack": "^5.65.0",
+        "webpack-dev-server": "^4.7.2"
+    },
+    "devDependencies": {
+        "eslint": "^6.8.0",
+        "eslint-plugin-react": "^7.18.3",
+        "eslint-plugin-react-hooks": "^2.5.0"
+    },
+    "scripts": {
+        "lint": "eslint frontend"
+    }
+}
