@@ -8,9 +8,10 @@ import {
     useBase,
     useRecords
 } from "@airtable/blocks/ui";
-import { parseTimeAvString, parseTimeAvString2, findSolution, findMeetings, stringifyIntervalRich, fitSolution, wait } from "../lib/util"
+import { parseTimeAvString, parseTimeAvString2, findSolution, stringifyIntervalRich, fitSolution, wait, prettyPrintIntervals } from "../lib/util"
 import { Set, Map, List } from 'immutable';
-import { solve } from "../lib/algorithm"
+import { solve, findMeetings } from "../lib/algorithm.js"
+import { useEffect } from 'react';
 
 function PersonBlob({ name }) {
     return (
@@ -33,7 +34,8 @@ function Solution({ solution, config }) {
                     {cohorts.map(cohort => {
                         const facilitatorName = cohort.getIn(["facilitator", "name"])
                         const participantsNames = cohort.get("participants").map(p => p.get("name"))
-                        const meetings = cohort.get("meetings").map(stringifyIntervalRich)
+                        const meetings = prettyPrintIntervals(cohort.get("meetings"), config)
+                        console.log(meetings);
 
                         return (
                             <div className="flex">
@@ -47,7 +49,7 @@ function Solution({ solution, config }) {
                                         {participantsNames.map(n => <PersonBlob name={n} />)}
                                     </div>
                                 </div>
-                                <div className="h-6 my-1 overflow-hidden w-2/5">{meetings.join(", ")}</div>
+                                <div className="h-6 my-1 overflow-hidden w-2/5">{meetings}</div>
                             </div>
                         )
                     })}
@@ -63,7 +65,7 @@ function Solver({ participants, facilitators, config }) {
         setResults(results.concat([result]))
     }
 
-    let [currentResult, setCurrentResult] = useState(0)
+    let [currentResult, setCurrentResult] = useState()
     const decCurrentResult = () => {
         if (currentResult > 0) {
             setCurrentResult(currentResult - 1)
@@ -80,8 +82,13 @@ function Solver({ participants, facilitators, config }) {
     }
 
     let [running, setRunning] = useState(false)
-    let [console, setConsole] = useState()
-    const uilog = (out) => setConsole(out)
+    let [con, setConsole] = useState()
+    const uilog = (out) => {
+        setConsole(out)
+    }
+    useEffect(() => {
+        console.log(con);
+    })
     const input = {
         facilitators: facilitators,
         participants: participants
@@ -110,7 +117,7 @@ function Solver({ participants, facilitators, config }) {
                             setConsole("")
                         }}>Stop algorithm</Button>
                 }
-                <span className="font-mono">{console}</span>
+                <span className="font-mono">{con}</span>
             </div>
             {currentResult >= 0 && results[currentResult] &&
                 <React.Fragment>
@@ -130,29 +137,6 @@ function Solver({ participants, facilitators, config }) {
             }
         </div >
     )
-
-    return (
-        <div className="space-y-2">
-            <Button variant="secondary"
-                icon="play"
-                onClick={async () => {
-                    setConsole("")
-                    setRunning(true)
-                    setResult(await solve(input, config, null))
-                    setRunning(false)
-                }}>
-                Run algorithm
-            </Button>
-            {running ?
-                <div className="space-y-2">
-                    <Solution solution={result} config={config} />
-                    <div className="flex justify-end">
-                        <Button icon="right" onClick={() => console.log(result?.toJS())}>Accept</Button>
-                    </div>
-                </div>
-                : <div className="border border-slid border-slate-500 rounded bg-white h-48 overflow-scroll">
-                </div>}
-        </div>)
 }
 
 export function Scheduling() {
