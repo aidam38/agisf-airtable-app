@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import {
     ViewPickerSynced,
     FormField,
@@ -10,9 +10,8 @@ import {
     expandRecord,
     Dialog
 } from "@airtable/blocks/ui";
-import { parseTimeAvString, parseTimeAvString2, findSolution, stringifyIntervalRich, fitSolution, wait, prettyPrintIntervals } from "../lib/util"
+import { parseTimeAvString2, wait, prettyPrintIntervals } from "../lib/util"
 import { solve, findMeetings } from "../lib/algorithm.js"
-import { useEffect } from 'react';
 
 function PersonBlob({ name }) {
     return (
@@ -28,7 +27,6 @@ function Solution({ solution, config }) {
         let meetings = { meetings: findMeetings(cohort, config) }
         return { ...cohort, ...meetings }
     })
-    console.log(cohorts);
 
     return (
         <div>
@@ -202,12 +200,14 @@ export function Scheduling() {
     const cohortsTable = base.getTableById(globalConfig.get("cohortsTable"))
 
     const accept = (solution) => {
-        const cohortRecords = solution.map(({ facilitator, participants }) => {
+        console.log(solution);
+        const cohortRecords = solution.map(cohort => {
+            const { facilitator, participants } = cohort
             return {
                 fields: {
                     [globalConfig.get("cohortsTableFacilitatorField")]: [{ id: facilitator.id }],
                     [globalConfig.get("cohortsTableParticipantsField")]: participants.map(p => { return { id: p.id } }),
-                    [globalConfig.get("cohortsTableMeetingTimesField")]: prettyPrintIntervals(findMeetings(solution, config), config)
+                    [globalConfig.get("cohortsTableMeetingTimesField")]: prettyPrintIntervals(findMeetings(cohort, config), config) || ""
                 }
             }
         })

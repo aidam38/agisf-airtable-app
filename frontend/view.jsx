@@ -22,7 +22,7 @@ export function View() {
     }
     const table = base.getTableById(cursor.activeTableId);
 
-    const config = { increment: { hours: 0, minutes: 30 }}
+    const config = { increment: { hour: 0, minute: 30 }}
 
     return (
         <div>

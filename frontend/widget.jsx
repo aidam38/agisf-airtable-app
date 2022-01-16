@@ -1,4 +1,4 @@
-import { parseTimeAvString, genererateAllCoords, generateAllTimes, stringifyTime } from '../lib/util';
+import { durationToHours, unparseNumber, isWithin, parseTimeAvString2, prettyPrintCoord } from '../lib/util';
 import React from 'react';
 import {
     useBase,
@@ -15,7 +15,7 @@ const dayLabels = {
     6: "Sun"
 }
 
-function Cell({ coord, isBlocked, borderStyles, borderClasses }) {
+function Cell({ isBlocked, borderStyles, borderClasses }) {
     return (
         <div className={"h-2 " + (isBlocked ? "bg-green-500" : "bg-red-50") + " " + borderClasses}
             style={borderStyles}></div>
@@ -26,18 +26,16 @@ export function TimeAvWidget({ table, recordId, config }) {
     console.log(table, recordId);
     const record = useRecordById(table, recordId);
     let timeav = record.getCellValue("Time availability in UTC")
-    const increment = config.get("increment")
 
-    timeav = parseTimeAvString(timeav, increment)
+    const multiplier = 1 / durationToHours(config.increment)
 
-    const allCoords = genererateAllCoords(increment)
+    timeav = parseTimeAvString2(timeav, config)
+
+    const allNumbers = [...Array(7 * 24 * multiplier).keys()]
 
     const cellHeight = 2
     const leftColumnWidth = 12
     const labelFreq = 2
-    console.log(generateAllTimes(config.get("increment")).filter((value, index, arr) => {
-        return index % labelFreq == 0;
-    }).toJS());
 
     return (
         <div>
@@ -47,27 +45,26 @@ export function TimeAvWidget({ table, recordId, config }) {
             <div className="flex">
                 <div className={"w-" + leftColumnWidth}></div>
                 <div className="grid w-full text-sm grid-cols-7">
-                    {[0, 1, 2, 3, 4, 5, 6].map(d => {
+                    {[...Array(7).keys()].map(d => {
                         return <div key={d} className="h-8 mx-auto">{dayLabels[d]}</div>
                     })}
                 </div>
             </div>
             <div className="flex text-xs">
                 <div className={"w-" + leftColumnWidth}>
-                    {generateAllTimes(config.get("increment")).filter((value, index, arr) => {
-                        return index % labelFreq == 0;
+                    {[24 * multiplier].filter((value) => {
+                        return value % labelFreq == 0;
                     }).map(time => {
                         return <div className={"flex justify-end px-1 h-" + labelFreq * cellHeight}>
-                            {stringifyTime(time)}
+                            {prettyPrintCoord(unparseNumber(time, multiplier))}
                         </div>
                     })}
                 </div>
                 <div className="w-full">
-                    <div className="grid grid-cols-7 border-t border-l border-solid border-gray-800">
-                        {allCoords.map((coord, i) =>
-                            <Cell key={JSON.stringify(coord)}
-                                coord={coord}
-                                isBlocked={timeav.some(c => c.equals(coord))}
+                    <div className="grid grid-flow-col border-t border-l border-solid border-gray-800" style={{ "grid-template-rows": "repeat(48, minmax(0, 1fr))" }}>
+                        {allNumbers.map((number, i) =>
+                            <Cell key={number}
+                                isBlocked={timeav.some(interval => isWithin(interval, number))}
                                 borderClasses="border-r border-b border-gray-800 border-r-solid"
                                 borderStyles={Math.floor(i / 7) % labelFreq == 0 ?
                                     { borderBottomStyle: "dotted" } :
@@ -75,23 +72,6 @@ export function TimeAvWidget({ table, recordId, config }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
-}
-
-function OldApp() {
-    loadScriptFromURLAsync("https://cdn.tailwindcss.com")
-
-    const base = useBase();
-    const cursor = useCursor();
-    const table = base.getTableById(cursor.activeTableId);
-
-    useLoadable(cursor);
-    useWatchable(cursor, ['selectedRecordIds']);
-
-    if (cursor.selectedRecordIds.length == 1) {
-        return <TimeAvWidget table={table} recordId={cursor.selectedRecordIds[0]} />
-    } else {
-        return <div>Can only select one record at a time</div>
-    }
 }
