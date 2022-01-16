@@ -6,7 +6,9 @@ import {
     Button,
     useGlobalConfig,
     useBase,
-    useRecords
+    useRecords,
+    expandRecord,
+    Dialog
 } from "@airtable/blocks/ui";
 import { parseTimeAvString, parseTimeAvString2, findSolution, stringifyIntervalRich, fitSolution, wait, prettyPrintIntervals } from "../lib/util"
 import { Set, Map, List } from 'immutable';
@@ -59,7 +61,7 @@ function Solution({ solution, config }) {
     )
 }
 
-function Solver({ participants, facilitators, config }) {
+function Solver({ input, config, acceptFn }) {
     let [results, setResults] = useState([])
     const addResult = result => {
         setResults(results.concat([result]))
@@ -89,10 +91,8 @@ function Solver({ participants, facilitators, config }) {
     useEffect(() => {
         console.log(con);
     })
-    const input = {
-        facilitators: facilitators,
-        participants: participants
-    }
+
+    let [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false)
 
     return (
         <div className="space-y-2">
@@ -131,7 +131,15 @@ function Solver({ participants, facilitators, config }) {
                                     <Button icon="chevronRight" onClick={incCurrentResult}></Button>
                                 </div>}
                         </div>
-                        <Button>Accept</Button>
+                        <React.Fragment>
+                            <Button onClick={() => setIsAcceptDialogOpen(true)}>Accept</Button>
+                            {isAcceptDialogOpen &&
+                                <Dialog onClose={() => { }} width="320px">
+                                    some text
+                                    <Button onClick={() => setIsAcceptDialogOpen(false)}>Cancel</Button>
+                                    <Button onClick={() => acceptFn(results[currentResult])}>Accept</Button>
+                                </Dialog>}
+                        </React.Fragment>
                     </div>
                 </React.Fragment>
             }
@@ -150,8 +158,7 @@ export function Scheduling() {
 
     const increment = Map({ hours: 0, minutes: 30 })
 
-    let facilitators;
-    let participants;
+    let input;
     let config;
 
     if (isConfigured) {
@@ -159,7 +166,7 @@ export function Scheduling() {
         const facilitatorView = facilitatorTable.getViewById(globalConfig.get("facilitatorTableView"))
         const participantView = participantsTable.getViewById(globalConfig.get("participantsTableView"))
 
-        facilitators = List(useRecords(facilitatorView, { fields: [globalConfig.get("facilitatorTableTimeAvField")] })
+        const facilitators = List(useRecords(facilitatorView, { fields: [globalConfig.get("facilitatorTableTimeAvField")] })
             .map(record => {
                 return Map({
                     id: record.id,
@@ -168,7 +175,7 @@ export function Scheduling() {
                 })
             }))
 
-        participants = List(useRecords(participantView, { fields: [globalConfig.get("participantsTableTimeAvField")] })
+        const participants = List(useRecords(participantView, { fields: [globalConfig.get("participantsTableTimeAvField")] })
             .map(record => {
                 return Map({
                     id: record.id,
@@ -177,6 +184,10 @@ export function Scheduling() {
                 })
             }))
 
+        input = {
+            facilitators: facilitators,
+            participants: participants
+        }
 
         config = {
             cohortSizes: [5, 4],
@@ -185,6 +196,23 @@ export function Scheduling() {
         }
     }
 
+    const cohortsTable = base.getTableById(globalConfig.get("cohortsTable"))
+    const facilitatorField = globalConfig.get("cohortsTableFacilitatorField")
+    const participantField = globalConfig.get("cohortsTableParticipantsField")
+
+    const accept = (solution) => {
+        console.log(solution.toJS());
+        const cohortRecords = solution.toJS().map(({ facilitator, participants }) => {
+            return {
+                fields: {
+                    [facilitatorField]: [{ id: facilitator.id }],
+                    [participantField]: participants.map(p => { return { id: p.id } })
+                }
+            }
+        })
+        console.log(cohortRecords);
+        cohortsTable.createRecordsAsync(cohortRecords)
+    }
 
     return (
         <div>
@@ -215,7 +243,7 @@ export function Scheduling() {
                 </div>
             </div>
             {isConfigured ?
-                <Solver participants={participants} facilitators={facilitators} config={config} />
+                <Solver input={input} config={config} acceptFn={accept} />
                 : <div>Please configure the algorithm above first.</div>}
         </div>
     )
