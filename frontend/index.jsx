@@ -56,7 +56,7 @@ function App() {
                     : <div className="px-2 py-1 text-slate-400">Please configure all settings first</div>}
                 <ATab icon="settings" />
             </Tab.List>
-            <Tab.Panels className="p-4 bg-slate-50 h-screen">
+            <Tab.Panels className="p-4 bg-slate-50 min-h-screen h-full">
                 {isConfigured &&
                     <React.Fragment>
                         <Tab.Panel><Scheduling /></Tab.Panel>
