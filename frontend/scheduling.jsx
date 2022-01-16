@@ -11,7 +11,6 @@ import {
     Dialog
 } from "@airtable/blocks/ui";
 import { parseTimeAvString, parseTimeAvString2, findSolution, stringifyIntervalRich, fitSolution, wait, prettyPrintIntervals } from "../lib/util"
-import { Set, Map, List } from 'immutable';
 import { solve, findMeetings } from "../lib/algorithm.js"
 import { useEffect } from 'react';
 
@@ -22,7 +21,14 @@ function PersonBlob({ name }) {
 }
 
 function Solution({ solution, config }) {
-    const cohorts = solution.map(cohort => cohort.merge(Map({ meetings: findMeetings(cohort, config) })))
+    if(solution.error) {
+        return <div>{solution.error}</div>
+    }
+    const cohorts = solution.map(cohort => {
+        let meetings = { meetings: findMeetings(cohort, config) }
+        return { ...cohort, ...meetings }
+    })
+    console.log(cohorts);
 
     return (
         <div>
@@ -34,10 +40,9 @@ function Solution({ solution, config }) {
                 </div>
                 <div className="w-full bg-white divide-y divide-gray-200">
                     {cohorts.map(cohort => {
-                        const facilitatorName = cohort.getIn(["facilitator", "name"])
-                        const participantsNames = cohort.get("participants").map(p => p.get("name"))
-                        const meetings = prettyPrintIntervals(cohort.get("meetings"), config)
-                        console.log(meetings);
+                        const facilitatorName = cohort.facilitator.name
+                        const participantsNames = cohort.participants.map(p => p.name)
+                        const meetings = prettyPrintIntervals(cohort.meetings, config)
 
                         return (
                             <div className="flex">
@@ -135,9 +140,11 @@ function Solver({ input, config, acceptFn }) {
                             <Button onClick={() => setIsAcceptDialogOpen(true)}>Accept</Button>
                             {isAcceptDialogOpen &&
                                 <Dialog onClose={() => { }} width="320px">
-                                    some text
+                                    <div>
+                                        some scary text
+                                    </div>
                                     <Button onClick={() => setIsAcceptDialogOpen(false)}>Cancel</Button>
-                                    <Button onClick={() => acceptFn(results[currentResult])}>Accept</Button>
+                                    <Button onClick={() => { setIsAcceptDialogOpen(false); acceptFn(results[currentResult]) }}>Accept</Button>
                                 </Dialog>}
                         </React.Fragment>
                     </div>
@@ -156,61 +163,54 @@ export function Scheduling() {
     const requiredKeys = ["facilitatorTableView", "participantsTableView", "lengthOfMeeting"]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
-    const increment = Map({ hours: 0, minutes: 30 })
+    let config = {
+        cohortSizes: [5, 4],
+        lengthOfMeeting: globalConfig.get("lengthOfMeeting"),
+        increment: { hour: 0, minute: 30 }
+    };
 
     let input;
-    let config;
-
     if (isConfigured) {
         // get an array of facilitators and participants
         const facilitatorView = facilitatorTable.getViewById(globalConfig.get("facilitatorTableView"))
         const participantView = participantsTable.getViewById(globalConfig.get("participantsTableView"))
 
-        const facilitators = List(useRecords(facilitatorView, { fields: [globalConfig.get("facilitatorTableTimeAvField")] })
+        const facilitators = useRecords(facilitatorView, { fields: [globalConfig.get("facilitatorTableTimeAvField")] })
             .map(record => {
-                return Map({
+                return {
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("facilitatorTableTimeAvField")), increment)
-                })
-            }))
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("facilitatorTableTimeAvField")), config)
+                }
+            })
 
-        const participants = List(useRecords(participantView, { fields: [globalConfig.get("participantsTableTimeAvField")] })
+        const participants = useRecords(participantView, { fields: [globalConfig.get("participantsTableTimeAvField")] })
             .map(record => {
-                return Map({
+                return {
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("participantsTableTimeAvField")), increment)
-                })
-            }))
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("participantsTableTimeAvField")), config)
+                }
+            })
 
         input = {
             facilitators: facilitators,
             participants: participants
         }
-
-        config = {
-            cohortSizes: [5, 4],
-            lengthOfMeeting: globalConfig.get("lengthOfMeeting"),
-            increment: increment
-        }
     }
 
     const cohortsTable = base.getTableById(globalConfig.get("cohortsTable"))
-    const facilitatorField = globalConfig.get("cohortsTableFacilitatorField")
-    const participantField = globalConfig.get("cohortsTableParticipantsField")
 
     const accept = (solution) => {
-        console.log(solution.toJS());
-        const cohortRecords = solution.toJS().map(({ facilitator, participants }) => {
+        const cohortRecords = solution.map(({ facilitator, participants }) => {
             return {
                 fields: {
-                    [facilitatorField]: [{ id: facilitator.id }],
-                    [participantField]: participants.map(p => { return { id: p.id } })
+                    [globalConfig.get("cohortsTableFacilitatorField")]: [{ id: facilitator.id }],
+                    [globalConfig.get("cohortsTableParticipantsField")]: participants.map(p => { return { id: p.id } }),
+                    [globalConfig.get("cohortsTableMeetingTimesField")]: prettyPrintIntervals(findMeetings(solution, config), config)
                 }
             }
         })
-        console.log(cohortRecords);
         cohortsTable.createRecordsAsync(cohortRecords)
     }
 

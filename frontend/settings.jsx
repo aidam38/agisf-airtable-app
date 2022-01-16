@@ -72,6 +72,13 @@ export function Settings() {
                                     width="320px"
                                 />
                             </FormField>
+                            <FormField label="Cohorts table meeting times field">
+                                <FieldPickerSynced
+                                    table={base.getTableById(globalConfig.get("cohortsTable"))}
+                                    globalConfigKey="cohortsTableMeetingTimesField"
+                                    width="320px"
+                                />
+                            </FormField>
                         </div>
                     }
                 </div>

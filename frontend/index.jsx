@@ -11,7 +11,6 @@ import {
     useRecordById
 } from '@airtable/blocks/ui';
 import { Tab } from '@headlessui/react'
-import { Set, Map } from 'immutable';
 import { Settings } from './settings'
 import { Scheduling } from './scheduling';
 import { View } from './view';

@@ -8,7 +8,6 @@ import {
     useWatchable
 } from "@airtable/blocks/ui";
 import { TimeAvWidget } from "./widget";
-import { Map } from "immutable"
 
 export function View() {
     const globalConfig = useGlobalConfig()
@@ -23,7 +22,7 @@ export function View() {
     }
     const table = base.getTableById(cursor.activeTableId);
 
-    const config = Map({ increment: Map({ hours: 0, minutes: 30 })})
+    const config = { increment: { hours: 0, minutes: 30 }}
 
     return (
         <div>
