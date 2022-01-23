@@ -3,35 +3,55 @@ import {
     useGlobalConfig,
     useCursor,
     useBase,
-    useRecords,
     useLoadable,
-    useWatchable
+    useWatchable,
+    useRecordById
 } from "@airtable/blocks/ui";
-import { TimeAvWidget } from "./widget";
+import { TimeAvWidget } from "./components/widget";
 
-export function View() {
+function Widget({ cursor, config }) {
     const globalConfig = useGlobalConfig()
     const base = useBase()
+
+    const recordId = cursor.selectedRecordIds[0]
+    const table = base.getTableById(cursor.activeTableId)
+    const record = useRecordById(table, recordId);
+
+    const tableToTimeAvField = {
+        [globalConfig.get("participantsTable")]: globalConfig.get("participantsTableTimeAvField"),
+        [globalConfig.get("facilitatorTable")]: globalConfig.get("facilitatorTableTimeAvField"),
+        [globalConfig.get("cohortsTable")]: globalConfig.get("cohortsTableMeetingTimesField")
+    }
+
+    const field = tableToTimeAvField[cursor.activeTableId]
+    let timeav = record.getCellValue(field)
+
+    return (
+        <div>
+            <div className="text-xl">
+                {record.name}
+            </div>
+            <div className="w-96">
+                <TimeAvWidget timeav={timeav} config={config} />
+            </div>
+        </div>
+    )
+}
+
+export function View({ config }) {
+    const globalConfig = useGlobalConfig()
     const cursor = useCursor();
 
     useLoadable(cursor);
     useWatchable(cursor, ['selectedRecordIds']);
 
-    if (!["participantsTable", "facilitatorTable"].map(key => globalConfig.get(key)).some(tid => tid == cursor.activeTableId)) {
-        return <div>Not in participants or facilitators table</div>;
+    if (!["participantsTable", "facilitatorTable", "cohortsTable"].map(key => globalConfig.get(key)).some(tid => tid == cursor.activeTableId)) {
+        return <div>Not in participants, facilitators, or cohorts table</div>;
     }
-    const table = base.getTableById(cursor.activeTableId);
 
-    const config = { increment: { hour: 0, minute: 30 }}
+    if (cursor.selectedRecordIds.length == 0) {
+        return <div>No records selected</div>
+    }
 
-    return (
-        <div>
-            {cursor.selectedRecordIds.length > 0 ?
-                <div className="w-96">
-                    <TimeAvWidget table={table} recordId={cursor.selectedRecordIds[0]} config={config} />
-                </div>
-                : <div>No records selected</div>
-            }
-        </div>
-    )
+    return <Widget cursor={cursor} config={config}/>
 }

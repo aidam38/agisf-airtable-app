@@ -43,6 +43,8 @@ function App() {
         "cohortsTable", "cohortsTableFacilitatorField", "cohortsTableParticipantsField"]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
+    const config = { increment: { hour: 0, minute: 30 } }
+
     return (
         <Tab.Group defaultIndex={1}>
             <Tab.List className="h-8 p-1 w-full flex justify-between items-center bg-slate-500">
@@ -59,7 +61,7 @@ function App() {
                 {isConfigured &&
                     <React.Fragment>
                         <Tab.Panel><Scheduling /></Tab.Panel>
-                        <Tab.Panel><View /></Tab.Panel>
+                        <Tab.Panel><View config={config} /></Tab.Panel>
                         <Tab.Panel><Test /></Tab.Panel>
                     </React.Fragment>}
                 <Tab.Panel><Settings /></Tab.Panel>

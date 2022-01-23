@@ -1,9 +1,5 @@
-import { durationToHours, unparseNumber, isWithin, parseTimeAvString2, prettyPrintCoord } from '../lib/util';
+import { durationToHours, unparseNumber, isWithin, parseTimeAvString2, prettyPrintTime } from '../../lib/util';
 import React from 'react';
-import {
-    useBase,
-    useRecordById
-} from "@airtable/blocks/ui";
 
 const dayLabels = {
     0: "Mon",
@@ -22,11 +18,7 @@ function Cell({ isBlocked, borderStyles, borderClasses }) {
     )
 }
 
-export function TimeAvWidget({ table, recordId, config }) {
-    console.log(table, recordId);
-    const record = useRecordById(table, recordId);
-    let timeav = record.getCellValue("Time availability in UTC")
-
+export function TimeAvWidget({ timeav, config }) {
     const multiplier = 1 / durationToHours(config.increment)
 
     timeav = parseTimeAvString2(timeav, config)
@@ -39,9 +31,6 @@ export function TimeAvWidget({ table, recordId, config }) {
 
     return (
         <div>
-            <div className="text-lg">
-                {record.name}
-            </div>
             <div className="flex">
                 <div className={"w-" + leftColumnWidth}></div>
                 <div className="grid w-full text-sm grid-cols-7">
@@ -52,11 +41,13 @@ export function TimeAvWidget({ table, recordId, config }) {
             </div>
             <div className="flex text-xs">
                 <div className={"w-" + leftColumnWidth}>
-                    {[24 * multiplier].filter((value) => {
+                    {[...Array(24 * multiplier).keys()].filter((value) => {
                         return value % labelFreq == 0;
                     }).map(time => {
                         return <div className={"flex justify-end px-1 h-" + labelFreq * cellHeight}>
-                            {prettyPrintCoord(unparseNumber(time, multiplier))}
+                            <div className="-translate-y-2">
+                                {prettyPrintTime(unparseNumber(time, multiplier))}
+                            </div>
                         </div>
                     })}
                 </div>
@@ -66,7 +57,7 @@ export function TimeAvWidget({ table, recordId, config }) {
                             <Cell key={number}
                                 isBlocked={timeav.some(interval => isWithin(interval, number))}
                                 borderClasses="border-r border-b border-gray-800 border-r-solid"
-                                borderStyles={Math.floor(i / 7) % labelFreq == 0 ?
+                                borderStyles={Math.floor(number) % labelFreq == 0 ?
                                     { borderBottomStyle: "dotted" } :
                                     { borderBottomStyle: "solid" }} />)}
                     </div>
