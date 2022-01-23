@@ -43,7 +43,7 @@ function Solution({ solution, config }) {
                         const meetings = prettyPrintIntervals(cohort.meetings, config)
 
                         return (
-                            <div className="flex">
+                            <div key={facilitatorName} className="flex">
                                 <div className="h-6 my-1 overflow-hidden w-1/5">
                                     <div className="flex w-full">
                                         <PersonBlob name={facilitatorName} />
@@ -51,7 +51,7 @@ function Solution({ solution, config }) {
                                 </div>
                                 <div className="h-6 my-1 overflow-hidden w-2/5">
                                     <div className="flex w-full space-x-1">
-                                        {participantsNames.map(n => <PersonBlob name={n} />)}
+                                        {participantsNames.map(n => <PersonBlob key={n} name={n} />)}
                                     </div>
                                 </div>
                                 <div className="h-6 my-1 overflow-hidden w-2/5">{meetings}</div>
@@ -64,6 +64,7 @@ function Solution({ solution, config }) {
     )
 }
 
+export var runningGlobal = false
 function Solver({ input, config, acceptFn }) {
     let [results, setResults] = useState([])
     const addResult = result => {
@@ -91,9 +92,6 @@ function Solver({ input, config, acceptFn }) {
     const uilog = (out) => {
         setConsole(out)
     }
-    useEffect(() => {
-        console.log(con);
-    })
 
     let [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false)
 
@@ -107,9 +105,11 @@ function Solver({ input, config, acceptFn }) {
                         onClick={async () => {
                             setConsole("")
                             setRunning(true)
+                            runningGlobal = true
                             addResult(await solve(input, config, uilog))
                             currentResultLast()
                             setRunning(false)
+                            runningGlobal = false
                             setConsole("")
                         }}>Run algorithm</Button>
                     : <Button
@@ -117,6 +117,7 @@ function Solver({ input, config, acceptFn }) {
                         icon="italic"
                         onClick={async () => {
                             setRunning(false)
+                            runningGlobal = false
                             setConsole("")
                         }}>Stop algorithm</Button>
                 }
@@ -129,9 +130,9 @@ function Solver({ input, config, acceptFn }) {
                         <div>
                             {results.length > 1 &&
                                 <div>
-                                    <Button icon="chevronLeft" onClick={decCurrentResult}></Button>
+                                    <Button icon="chevronLeft" onClick={decCurrentResult} aria-label="left"></Button>
                                     {currentResult + 1}/{results.length}
-                                    <Button icon="chevronRight" onClick={incCurrentResult}></Button>
+                                    <Button icon="chevronRight" onClick={incCurrentResult} aria-label="right"></Button>
                                 </div>}
                         </div>
                         <React.Fragment>
