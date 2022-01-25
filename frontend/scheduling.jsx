@@ -15,7 +15,7 @@ import { solve, solve_dfs, solve_dfs2, findMeetings } from "../lib/algorithm.js"
 
 function PersonBlob({ name }) {
     return (
-        <div className="rounded px-1 bg-blue-50 h-5">{name}</div>
+        <div className="rounded px-1 bg-blue-50 h-5">{name.substring(0, 8)}</div>
     )
 }
 
@@ -50,7 +50,7 @@ function Solution({ solution, config }) {
                                     </div>
                                 </div>
                                 <div className="h-6 my-1 overflow-hidden w-2/5">
-                                    <div className="flex w-full space-x-1">
+                                    <div className="flex flex-wrap space-x-1">
                                         {participantsNames.map(n => <PersonBlob key={n} name={n} />)}
                                     </div>
                                 </div>
