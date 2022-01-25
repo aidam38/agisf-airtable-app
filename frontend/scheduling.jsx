@@ -202,7 +202,7 @@ export function Scheduling() {
     const cohortsTable = base.getTableById(globalConfig.get("cohortsTable"))
 
     const accept = (solution) => {
-        console.log(solution);
+        solution = solution.filter(cohort => findMeetings(cohort, config).length != 0)
         const cohortRecords = solution.map(cohort => {
             const { facilitator, participants } = cohort
             return {
@@ -241,11 +241,11 @@ export function Scheduling() {
                                 type="number"
                                 globalConfigKey="lengthOfMeeting" />
                         </FormField>
-                        <FormField label="Number of generations">
+                        {/* <FormField label="Number of generations">
                             <InputSynced
                                 type="number"
                                 globalConfigKey="numberOfGenerations" />
-                        </FormField>
+                        </FormField> */}
                     </div>
                 </div>
             </div>
