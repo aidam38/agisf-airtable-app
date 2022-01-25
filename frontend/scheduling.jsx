@@ -11,7 +11,7 @@ import {
     Dialog
 } from "@airtable/blocks/ui";
 import { parseTimeAvString2, wait, prettyPrintIntervals } from "../lib/util"
-import { solve, findMeetings } from "../lib/algorithm.js"
+import { solve, solve_dfs, solve_dfs2, findMeetings } from "../lib/algorithm.js"
 
 function PersonBlob({ name }) {
     return (
@@ -106,7 +106,7 @@ function Solver({ input, config, acceptFn }) {
                             setConsole("")
                             setRunning(true)
                             runningGlobal = true
-                            addResult(await solve(input, config, uilog))
+                            addResult(await solve_dfs2(input, config, uilog))
                             currentResultLast()
                             setRunning(false)
                             runningGlobal = false
