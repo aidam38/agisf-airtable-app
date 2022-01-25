@@ -165,6 +165,7 @@ export function Scheduling() {
     let config = {
         cohortSizes: [5, 4],
         lengthOfMeeting: globalConfig.get("lengthOfMeeting"),
+        numberOfGenerations: globalConfig.get("numberOfGenerations"),
         increment: { hour: 0, minute: 30 }
     };
 
@@ -239,6 +240,11 @@ export function Scheduling() {
                             <InputSynced
                                 type="number"
                                 globalConfigKey="lengthOfMeeting" />
+                        </FormField>
+                        <FormField label="Number of generations">
+                            <InputSynced
+                                type="number"
+                                globalConfigKey="numberOfGenerations" />
                         </FormField>
                     </div>
                 </div>
