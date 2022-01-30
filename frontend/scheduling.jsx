@@ -15,12 +15,12 @@ import { solve, solve_dfs, solve_dfs2, findMeetings } from "../lib/algorithm.js"
 
 function PersonBlob({ name }) {
     return (
-        <div className="rounded px-1 bg-blue-50 h-5">{name.substring(0, 8)}</div>
+        <div className="rounded px-1 bg-blue-50 h-5">{name}</div>
     )
 }
 
 function Solution({ solution, config }) {
-    if(solution.error) {
+    if (solution.error) {
         return <div>{solution.error}</div>
     }
     const cohorts = solution.map(cohort => {
@@ -45,13 +45,16 @@ function Solution({ solution, config }) {
                         return (
                             <div key={facilitatorName} className="flex">
                                 <div className="h-6 my-1 overflow-hidden w-1/5">
-                                    <div className="flex w-full">
-                                        <PersonBlob name={facilitatorName} />
+                                    <div className="flex w-full ">
+                                        <div className="m-0.5">
+                                            <PersonBlob name={facilitatorName} />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="h-6 my-1 overflow-hidden w-2/5">
-                                    <div className="flex flex-wrap space-x-1">
-                                        {participantsNames.map(n => <PersonBlob key={n} name={n} />)}
+                                <div className="my-1 overflow-hidden w-2/5">
+                                    <div className="flex flex-wrap">
+                                        {participantsNames.map(n =>
+                                            <div className="m-0.5"><PersonBlob key={n} name={n} /></div>)}
                                     </div>
                                 </div>
                                 <div className="h-6 my-1 overflow-hidden w-2/5">{meetings}</div>
