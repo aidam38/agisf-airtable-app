@@ -6,11 +6,20 @@ import {
     FormField,
     useGlobalConfig,
     useBase,
+    Select
 } from "@airtable/blocks/ui";
+import { getNextNMondays } from "../lib/util";
 
 export function Settings() {
     const globalConfig = useGlobalConfig()
     const base = useBase()
+
+    const startDateOptions = getNextNMondays(10).map(d => {
+        return {
+            label: d.toLocaleDateString("en-US", { timeZone: 'UTC' }),
+            value: d.getTime()
+        }
+    })
 
     return (
         <div>
@@ -20,7 +29,17 @@ export function Settings() {
                     <FormField label="Length of meeting">
                         <InputSynced
                             type="number"
-                            globalConfigKey={["config", "lengthOfMeeting"]} />
+                            globalConfigKey={["config", "lengthOfMeeting"]}
+                            width="320px" />
+                    </FormField>
+                    <FormField label="First week">
+                        <Select
+                            options={startDateOptions}
+                            value={globalConfig.get(["config", "startDate"])}
+                            onChange={newValue => globalConfig.setAsync(["config", "startDate"], newValue)}
+                            width="320px"
+                        >
+                        </Select>
                     </FormField>
                 </div>
                 <div>
