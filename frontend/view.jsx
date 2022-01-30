@@ -18,9 +18,9 @@ function Widget({ cursor, config }) {
     const record = useRecordById(table, recordId);
 
     const tableToTimeAvField = {
-        [globalConfig.get("participantsTable")]: globalConfig.get("participantsTableTimeAvField"),
-        [globalConfig.get("facilitatorTable")]: globalConfig.get("facilitatorTableTimeAvField"),
-        [globalConfig.get("cohortsTable")]: globalConfig.get("cohortsTableMeetingTimesField")
+        [globalConfig.get(["participants", "table"])]: globalConfig.get(["participants", "timeAvField"]),
+        [globalConfig.get(["facilitators", "table"])]: globalConfig.get(["facilitators", "timeAvField"]),
+        [globalConfig.get(["cohorts", "table"])]: globalConfig.get(["cohorts", "meetingTimesField"])
     }
 
     const field = tableToTimeAvField[cursor.activeTableId]
@@ -45,7 +45,7 @@ export function View({ config }) {
     useLoadable(cursor);
     useWatchable(cursor, ['selectedRecordIds']);
 
-    if (!["participantsTable", "facilitatorTable", "cohortsTable"].map(key => globalConfig.get(key)).some(tid => tid == cursor.activeTableId)) {
+    if (![["participants", "table"], ["facilitators", "table"], ["cohorts", "table"]].map(key => globalConfig.get(key)).some(tid => tid == cursor.activeTableId)) {
         return <div>Not in participants, facilitators, or cohorts table</div>;
     }
 

@@ -226,15 +226,15 @@ function Solver({ input, config, acceptFn }) {
 export function Scheduling() {
     const base = useBase()
     const globalConfig = useGlobalConfig()
-    const facilitatorTable = base.getTableById(globalConfig.get("facilitatorTable"))
-    const participantsTable = base.getTableById(globalConfig.get("participantsTable"))
+    const facilitatorTable = base.getTableById(globalConfig.get(["facilitators", "table"]))
+    const participantsTable = base.getTableById(globalConfig.get(["participants", "table"]))
 
-    const requiredKeys = ["facilitatorTableView", "participantsTableView", "lengthOfMeeting"]
+    const requiredKeys = [["facilitators", "view"], ["participants", "view"], ["config", "lengthOfMeeting"]]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
     let config = {
         cohortSizes: [5, 4],
-        lengthOfMeeting: globalConfig.get("lengthOfMeeting"),
+        lengthOfMeeting: globalConfig.get(["config", "lengthOfMeeting"]),
         numberOfGenerations: globalConfig.get("numberOfGenerations"),
         increment: { hour: 0, minute: 30 }
     };
@@ -242,24 +242,24 @@ export function Scheduling() {
     let input;
     if (isConfigured) {
         // get an array of facilitators and participants
-        const facilitatorView = facilitatorTable.getViewById(globalConfig.get("facilitatorTableView"))
-        const participantView = participantsTable.getViewById(globalConfig.get("participantsTableView"))
+        const facilitatorView = facilitatorTable.getViewById(globalConfig.get(["facilitators", "view"]))
+        const participantView = participantsTable.getViewById(globalConfig.get(["participants", "view"]))
 
-        const facilitators = useRecords(facilitatorView, { fields: [globalConfig.get("facilitatorTableTimeAvField")] })
+        const facilitators = useRecords(facilitatorView, { fields: [globalConfig.get(["facilitators", "timeAvField"])] })
             .map(record => {
                 return {
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("facilitatorTableTimeAvField")), config)
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get(["facilitators", "timeAvField"])), config)
                 }
             })
 
-        const participants = useRecords(participantView, { fields: [globalConfig.get("participantsTableTimeAvField")] })
+        const participants = useRecords(participantView, { fields: [globalConfig.get(["participants", "timeAvField"])] })
             .map(record => {
                 return {
                     id: record.id,
                     name: record.name,
-                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get("participantsTableTimeAvField")), config)
+                    timeAv: parseTimeAvString2(record.getCellValue(globalConfig.get(["participants", "timeAvField"])), config)
                 }
             })
 
@@ -269,17 +269,18 @@ export function Scheduling() {
         }
     }
 
-    const cohortsTable = base.getTableById(globalConfig.get("cohortsTable"))
+    const cohortsTable = base.getTableById(globalConfig.get(["cohorts", "table"]))
 
     const accept = (solution) => {
         solution = solution.filter(cohort => findMeetings(cohort, config).length != 0)
         const cohortRecords = solution.map(cohort => {
             const { facilitator, participants } = cohort
+            const overlap = findMeetings(cohort, config)
             return {
                 fields: {
-                    [globalConfig.get("cohortsTableFacilitatorField")]: [{ id: facilitator.id }],
-                    [globalConfig.get("cohortsTableParticipantsField")]: participants.map(p => { return { id: p.id } }),
-                    [globalConfig.get("cohortsTableMeetingTimesField")]: prettyPrintIntervals(findMeetings(cohort, config), config) || ""
+                    [globalConfig.get(["cohorts", "facilitatorField"])]: [{ id: facilitator.id }],
+                    [globalConfig.get(["cohorts", "participantsField"])]: participants.map(p => { return { id: p.id } }),
+                    [globalConfig.get(["cohorts", "meetingTimesField"])]: prettyPrintIntervals(overlap, config) || ""
                 }
             }
         })
@@ -295,22 +296,17 @@ export function Scheduling() {
                         <FormField label="Facilitator table view">
                             <ViewPickerSynced
                                 table={facilitatorTable}
-                                globalConfigKey="facilitatorTableView"
+                                globalConfigKey={["facilitators", "view"]}
                             />
                         </FormField>
                         <FormField label="Participants table view">
                             <ViewPickerSynced
                                 table={participantsTable}
-                                globalConfigKey="participantsTableView"
+                                globalConfigKey={["participants", "view"]}
                             />
                         </FormField>
                     </div>
                     <div className="w-1/2" >
-                        <FormField label="Length of meeting">
-                            <InputSynced
-                                type="number"
-                                globalConfigKey="lengthOfMeeting" />
-                        </FormField>
                         {/* <FormField label="Number of generations">
                             <InputSynced
                                 type="number"

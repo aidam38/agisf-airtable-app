@@ -38,9 +38,9 @@ function App() {
     const base = useBase();
     const globalConfig = useGlobalConfig()
     const requiredKeys = [
-        "facilitatorTable", "facilitatorTableTimeAvField",
-        "participantsTable", "participantsTableTimeAvField",
-        "cohortsTable", "cohortsTableFacilitatorField", "cohortsTableParticipantsField"]
+        ["facilitators", "table"], ["facilitators", "timeAvField"],
+        ["participants", "table"], ["participants", "timeAvField"],
+        ["cohorts", "table"], ["cohorts", "facilitatorField"], ["cohorts", "participantsField"], ["cohorts", "meetingTimesField"]]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
     const config = { increment: { hour: 0, minute: 30 } }
