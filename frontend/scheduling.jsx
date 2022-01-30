@@ -1,4 +1,5 @@
 import React, { Fragment, useState, useEffect } from 'react';
+import { Combination, combination } from "../lib/combinatorics.js";
 import {
     ViewPickerSynced,
     FormField,
@@ -12,6 +13,7 @@ import {
 } from "@airtable/blocks/ui";
 import { parseTimeAvString2, wait, prettyPrintIntervals } from "../lib/util"
 import { solve, solve_dfs, solve_dfs2, findMeetings } from "../lib/algorithm.js"
+import { Set } from "immutable";
 
 function PersonBlob({ name }) {
     return (
@@ -19,10 +21,14 @@ function PersonBlob({ name }) {
     )
 }
 
-function Solution({ solution, config }) {
-    if (solution.error) {
-        return <div>{solution.error}</div>
+function Solution({ result, config }) {
+    if (result.error) {
+        return <div>{result.error}</div>
     }
+
+    const { solution, unused } = result
+
+
     const cohorts = solution.map(cohort => {
         let meetings = { meetings: findMeetings(cohort, config) }
         return { ...cohort, ...meetings }
@@ -63,6 +69,28 @@ function Solution({ solution, config }) {
                     })}
                 </div>
             </div>
+            <div>
+                <div>
+                    <div>Unused participants: </div>
+                    <div className="flex">
+                        {unused.participants.map(p =>
+                            <div className="m-0.5">
+                                <PersonBlob name={p.name}></PersonBlob>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div>
+                    <div>Unused facilitators: </div>
+                    <div className="flex">
+                        {unused.facilitators.map(p => (
+                            <div className="m-0.5">
+                                <PersonBlob name={p.name}></PersonBlob>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
@@ -71,7 +99,46 @@ export var runningGlobal = false
 function Solver({ input, config, acceptFn }) {
     let [results, setResults] = useState([])
     const addResult = result => {
-        setResults(results.concat([result]))
+        if (result.error) {
+            setResults(results.concat([result]))
+            return
+        }
+        // sanitize result
+        // fix cohorts that have no over lap
+        const actualResult = result.map(cohort => {
+            const ncohort = { ...cohort }
+            for (let k = cohort.participants.length; k > 0; k--) {
+                const subgroups = [...(new Combination(cohort.participants, k))]
+                for (const group of subgroups) {
+                    ncohort.participants = group
+                    if (findMeetings(ncohort, config).length > 0) {
+                        return ncohort
+                    }
+                }
+            }
+        })
+
+        // list people who're not in a cohort
+        const usedFacilitators = actualResult.map(cohort => cohort.facilitator)
+        let usedParticipants = []
+        for (const parts of actualResult.map(cohort => cohort.participants)) {
+            usedParticipants = usedParticipants.concat(parts)
+        }
+
+        // cabage cooooode
+        
+        const usedFacilitatorIDs = Set(usedFacilitators.map(f => f.id))
+        const unusedFacilitators = [...input.facilitators].filter(f => !usedFacilitatorIDs.has(f.id))
+        const usedParticipantIDs = Set(usedParticipants.map(p => p.id))
+        const unusedParticipants = [...input.participants].filter(p => !usedParticipantIDs.has(p.id))
+
+        setResults(results.concat([{
+            solution: actualResult,
+            unused: {
+                facilitators: unusedFacilitators,
+                participants: unusedParticipants
+            }
+        }]))
     }
 
     let [currentResult, setCurrentResult] = useState()
@@ -128,7 +195,7 @@ function Solver({ input, config, acceptFn }) {
             </div>
             {currentResult >= 0 && results[currentResult] &&
                 <React.Fragment>
-                    <Solution solution={results[currentResult]} config={config} />
+                    <Solution result={results[currentResult]} config={config} />
                     <div className="flex justify-between">
                         <div>
                             {results.length > 1 &&
