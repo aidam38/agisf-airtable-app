@@ -106,10 +106,17 @@ export function Settings() {
                                     width="320px"
                                 />
                             </FormField>
-                            <FormField label="Cohorts table main meeting time field">
+                            <FormField label="Cohorts table main meeting time start date field">
                                 <FieldPickerSynced
                                     table={base.getTableById(globalConfig.get(["cohorts", "table"]))}
-                                    globalConfigKey="cohortsTableMainMeetingTimeField"
+                                    globalConfigKey={["cohorts", "startDateField"]}
+                                    width="320px"
+                                />
+                            </FormField>
+                            <FormField label="Cohorts table main meeting time end date field">
+                                <FieldPickerSynced
+                                    table={base.getTableById(globalConfig.get(["cohorts", "table"]))}
+                                    globalConfigKey={["cohorts", "endDateField"]}
                                     width="320px"
                                 />
                             </FormField>
