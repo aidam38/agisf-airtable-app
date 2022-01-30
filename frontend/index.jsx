@@ -13,7 +13,7 @@ import {
 import { Tab } from '@headlessui/react'
 import { Settings } from './settings'
 import { Scheduling } from './scheduling';
-import { View } from './view';
+import { ViewWrapper } from './view';
 import { Test } from './test';
 
 
@@ -43,7 +43,12 @@ function App() {
         ["cohorts", "table"], ["cohorts", "facilitatorField"], ["cohorts", "participantsField"], ["cohorts", "meetingTimesField"]]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
-    const config = { increment: { hour: 0, minute: 30 } }
+    const config = {
+        cohortSizes: [5, 4],
+        lengthOfMeeting: globalConfig.get(["config", "lengthOfMeeting"]),
+        numberOfGenerations: globalConfig.get("numberOfGenerations"),
+        increment: { hour: 0, minute: 30 }
+    };
 
     return (
         <Tab.Group defaultIndex={1}>
@@ -60,8 +65,8 @@ function App() {
             <Tab.Panels className="p-4 bg-slate-50 min-h-screen h-full">
                 {isConfigured &&
                     <React.Fragment>
-                        <Tab.Panel><Scheduling /></Tab.Panel>
-                        <Tab.Panel><View config={config} /></Tab.Panel>
+                        <Tab.Panel><Scheduling config={config} /></Tab.Panel>
+                        <Tab.Panel><ViewWrapper config={config} /></Tab.Panel>
                         <Tab.Panel><Test /></Tab.Panel>
                     </React.Fragment>}
                 <Tab.Panel><Settings /></Tab.Panel>

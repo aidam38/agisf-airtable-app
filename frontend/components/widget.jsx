@@ -55,7 +55,7 @@ export function TimeAvWidget({ timeav, config }) {
                     <div className="grid grid-flow-col border-t border-l border-solid border-gray-800" style={{ "grid-template-rows": "repeat(48, minmax(0, 1fr))" }}>
                         {allNumbers.map((number, i) =>
                             <Cell key={number}
-                                isBlocked={timeav.some(interval => isWithin(interval, number))}
+                                isBlocked={timeav?.some(interval => isWithin(interval, number))}
                                 borderClasses="border-r border-b border-gray-800 border-r-solid"
                                 borderStyles={Math.floor(number) % labelFreq == 0 ?
                                     { borderBottomStyle: "dotted" } :
