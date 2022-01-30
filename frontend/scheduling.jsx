@@ -11,8 +11,8 @@ import {
     expandRecord,
     Dialog
 } from "@airtable/blocks/ui";
-import { parseTimeAvString2, wait, prettyPrintIntervals } from "../lib/util"
-import { solve, solve_dfs, solve_dfs2, findMeetings } from "../lib/algorithm.js"
+import { parseTimeAvString2, wait, prettyPrintIntervals, unparseInterval, durationToHours } from "../lib/util"
+import { solve, solve_dfs, solve_dfs2, findMeetings, pickATime } from "../lib/algorithm.js"
 import { Set } from "immutable";
 
 function PersonBlob({ name }) {
@@ -213,7 +213,7 @@ function Solver({ input, config, acceptFn }) {
                                         some scary text
                                     </div>
                                     <Button onClick={() => setIsAcceptDialogOpen(false)}>Cancel</Button>
-                                    <Button onClick={() => { setIsAcceptDialogOpen(false); acceptFn(results[currentResult]) }}>Accept</Button>
+                                    <Button onClick={() => { setIsAcceptDialogOpen(false); acceptFn(results[currentResult].solution) }}>Accept</Button>
                                 </Dialog>}
                         </React.Fragment>
                     </div>
@@ -273,14 +273,33 @@ export function Scheduling() {
 
     const accept = (solution) => {
         solution = solution.filter(cohort => findMeetings(cohort, config).length != 0)
+
+        const monday = new Date(globalConfig.get(["config", "startDate"]))
+
         const cohortRecords = solution.map(cohort => {
             const { facilitator, participants } = cohort
             const overlap = findMeetings(cohort, config)
+            const mainMeeting = pickATime(overlap, config)
+
+            const multiplier = 1 / durationToHours(config.increment)
+            const [startCoord, endCoord] = unparseInterval(mainMeeting, multiplier)
+
+            let start = new Date(monday.getTime())
+            start.setDate(start.getDate() + startCoord.day)
+            start.setUTCHours(startCoord.hour)
+            start.setUTCMinutes(startCoord.minute)
+            let end = new Date(monday.getTime())
+            end.setDate(end.getDate() + endCoord.day)
+            end.setUTCHours(endCoord.hour)
+            end.setUTCMinutes(endCoord.minute)
+
             return {
                 fields: {
                     [globalConfig.get(["cohorts", "facilitatorField"])]: [{ id: facilitator.id }],
                     [globalConfig.get(["cohorts", "participantsField"])]: participants.map(p => { return { id: p.id } }),
-                    [globalConfig.get(["cohorts", "meetingTimesField"])]: prettyPrintIntervals(overlap, config) || ""
+                    [globalConfig.get(["cohorts", "meetingTimesField"])]: prettyPrintIntervals(overlap, config) || "",
+                    [globalConfig.get(["cohorts", "startDateField"])]: start,
+                    [globalConfig.get(["cohorts", "endDateField"])]: end
                 }
             }
         })
