@@ -11,7 +11,7 @@ import {
     useRecordById
 } from "@airtable/blocks/ui";
 import { TimeAvWidget } from "./components/widget";
-import { intersectIntervalArrays, findMeetingsGroup, pickATime } from "../lib/algorithm";
+import { intersectIntervalArrays, findMeetingsGroup, pickATime, findOverlapGroup } from "../lib/algorithm";
 import { getDates, parseTimeAvString2, prettyPrintIntervals } from "../lib/util";
 
 function Facilitator({ record, config }) {
@@ -39,15 +39,29 @@ function Participant({ record, config }) {
     const field = globalConfig.get(["participants", "timeAvField"])
     let timeav = record.getCellValue(field)
 
-
     const cohortsTable = base.getTable(globalConfig.get(["cohorts", "table"]))
     const id = globalConfig.get(["cohorts", "meetingTimesField"])
     const allCohorts = useRecords(cohortsTable, { fields: [id] })
-    const cohorts = allCohorts.filter(cohort => {
+
+    if (!timeav) {
+        return <div>Participant hasn't filled out the time availability form.</div>
+    }
+
+    const cohortsPartial = allCohorts.filter(cohort => {
         const timeav2 = cohort.getCellValue(id)
-        return intersectIntervalArrays(
-            parseTimeAvString2(timeav, config),
-            parseTimeAvString2(timeav2, config)).length > 0
+        if(!timeav2) {
+            return false
+        }
+        return findOverlapGroup([parseTimeAvString2(timeav, config),
+        parseTimeAvString2(timeav2, config)], config).length > 0
+    })
+    const cohortsFull = allCohorts.filter(cohort => {
+        const timeav2 = cohort.getCellValue(id)
+        if(!timeav2) {
+            return false
+        }
+        return findMeetingsGroup([parseTimeAvString2(timeav, config),
+        parseTimeAvString2(timeav2, config)], config).length > 0
     })
 
     return (
@@ -59,16 +73,26 @@ function Participant({ record, config }) {
                 <TimeAvWidget timeav={timeav} config={config} />
             </div>
             <div>
-                {cohorts.map(cohort => {
-                    return <div className="flex">
-                        <div>
-                            {cohort.name}
+                Full overlap
+                <div>
+                    {cohortsFull.map(cohort => {
+                        return <div className="flex">
+                            <div>
+                                {cohort.name}
+                            </div>
                         </div>
-                        <button >
-                            Move
-                        </button>
-                    </div>
-                })}
+                    })}
+                </div>
+                Any overlap
+                <div>
+                    {cohortsPartial.map(cohort => {
+                        return <div className="flex">
+                            <div>
+                                {cohort.name}
+                            </div>
+                        </div>
+                    })}
+                </div>
             </div>
         </div>
     )
@@ -82,11 +106,12 @@ function Cohort({ record, config }) {
 
     // load cohort
     const allParticipants = useRecords(base.getTable(globalConfig.get(["participants", "table"])))
+    const allFacilitators = useRecords(base.getTable(globalConfig.get(["facilitators", "table"])))
+
     const participants = record.getCellValue(globalConfig.get(["cohorts", "participantsField"])).map(p1 => {
         return allParticipants.find(p2 => p2.id == p1.id).getCellValue(globalConfig.get(["participants", "timeAvField"]))
     })
 
-    const allFacilitators = useRecords(base.getTable(globalConfig.get(["facilitators", "table"])))
     const facilitator = record.getCellValue(globalConfig.get(["cohorts", "facilitatorField"])).map(p1 => {
         return allFacilitators.find(p2 => p2.id == p1.id).getCellValue(globalConfig.get(["facilitators", "timeAvField"]))
     })
