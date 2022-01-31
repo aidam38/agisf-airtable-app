@@ -32,6 +32,11 @@ export function Settings() {
                             globalConfigKey={["config", "lengthOfMeeting"]}
                             width="320px" />
                     </FormField>
+                    <FormField label="Cohort sizes (comma-separated list in order of preference)">
+                        <InputSynced
+                            globalConfigKey={["config", "cohortSizes"]}
+                            width="320px" />
+                    </FormField>
                     <FormField label="First week">
                         <Select
                             options={startDateOptions}

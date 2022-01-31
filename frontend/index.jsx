@@ -44,11 +44,12 @@ function App() {
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
 
     const config = {
-        cohortSizes: [5, 4],
+        cohortSizes: globalConfig.get(["config", "cohortSizes"])?.split(",")?.map(s => parseInt(s.trim())) || [5, 4],
         lengthOfMeeting: globalConfig.get(["config", "lengthOfMeeting"]),
         numberOfGenerations: globalConfig.get("numberOfGenerations"),
         increment: { hour: 0, minute: 30 }
     };
+    console.log(config.cohortSizes);
 
     return (
         <Tab.Group defaultIndex={1}>
