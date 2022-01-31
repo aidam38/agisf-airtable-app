@@ -1,5 +1,6 @@
 import React from "react";
 import {
+    Button,
     useGlobalConfig,
     useCursor,
     useBase,
@@ -10,8 +11,8 @@ import {
     useRecordById
 } from "@airtable/blocks/ui";
 import { TimeAvWidget } from "./components/widget";
-import { intersectIntervalArrays, findMeetingsGroup } from "../lib/algorithm";
-import { parseTimeAvString2, prettyPrintIntervals } from "../lib/util";
+import { intersectIntervalArrays, findMeetingsGroup, pickATime } from "../lib/algorithm";
+import { getDates, parseTimeAvString2, prettyPrintIntervals } from "../lib/util";
 
 function Facilitator({ record, config }) {
     const globalConfig = useGlobalConfig()
@@ -77,6 +78,8 @@ function Cohort({ record, config }) {
     const globalConfig = useGlobalConfig()
     const base = useBase()
 
+    const cohortsTable = base.getTable(globalConfig.get(["cohorts", "table"]))
+
     // load cohort
     const allParticipants = useRecords(base.getTable(globalConfig.get(["participants", "table"])))
     const participants = record.getCellValue(globalConfig.get(["cohorts", "participantsField"])).map(p1 => {
@@ -90,22 +93,32 @@ function Cohort({ record, config }) {
 
     const allPeople = participants.concat(facilitator).map(s => parseTimeAvString2(s, config))
 
-    console.log(allPeople);
-    console.log(findMeetingsGroup(allPeople, config));
-    const overlap = prettyPrintIntervals(findMeetingsGroup(allPeople, config), config)
-    console.log(overlap);
+    const overlap = findMeetingsGroup(allPeople, config)
+    const mainMeeting = pickATime(overlap, config)
+    const monday = new Date(globalConfig.get(["config", "startDate"]))
+    const [start, end] = getDates(mainMeeting, monday, config)
+
+    const update = () => {
+        cohortsTable.updateRecordAsync(record.id,
+            {
+                [globalConfig.get(["cohorts", "meetingTimesField"])]: prettyPrintIntervals(overlap, config) || "",
+                [globalConfig.get(["cohorts", "startDateField"])]: start,
+                [globalConfig.get(["cohorts", "endDateField"])]: end
+            })
+    }
+
     return (
         <div>
             <div className="text-xl">
                 {record.name}
             </div>
             <div className="w-96">
-                <TimeAvWidget timeav={overlap} config={config} />
+                <TimeAvWidget timeav={prettyPrintIntervals(overlap, config)} config={config} />
             </div>
             <div className="flex justify-end">
-                <button >
+                <Button onClick={update}>
                     Reaccept
-                </button>
+                </Button>
             </div>
         </div>
     )

@@ -11,7 +11,7 @@ import {
     expandRecord,
     Dialog
 } from "@airtable/blocks/ui";
-import { parseTimeAvString2, wait, prettyPrintIntervals, unparseInterval, durationToHours } from "../lib/util"
+import { parseTimeAvString2, wait, prettyPrintIntervals, unparseInterval, durationToHours, getDates } from "../lib/util"
 import { solve, solve_dfs, solve_dfs2, findMeetings, pickATime } from "../lib/algorithm.js"
 import { Set } from "immutable";
 
@@ -126,7 +126,7 @@ function Solver({ input, config, acceptFn }) {
         }
 
         // cabage cooooode
-        
+
         const usedFacilitatorIDs = Set(usedFacilitators.map(f => f.id))
         const unusedFacilitators = [...input.facilitators].filter(f => !usedFacilitatorIDs.has(f.id))
         const usedParticipantIDs = Set(usedParticipants.map(p => p.id))
@@ -223,7 +223,7 @@ function Solver({ input, config, acceptFn }) {
     )
 }
 
-export function Scheduling() {
+export function Scheduling({ config }) {
     const base = useBase()
     const globalConfig = useGlobalConfig()
     const facilitatorTable = base.getTableById(globalConfig.get(["facilitators", "table"]))
@@ -231,13 +231,6 @@ export function Scheduling() {
 
     const requiredKeys = [["facilitators", "view"], ["participants", "view"], ["config", "lengthOfMeeting"]]
     const isConfigured = requiredKeys.every(key => globalConfig.get(key))
-
-    let config = {
-        cohortSizes: [5, 4],
-        lengthOfMeeting: globalConfig.get(["config", "lengthOfMeeting"]),
-        numberOfGenerations: globalConfig.get("numberOfGenerations"),
-        increment: { hour: 0, minute: 30 }
-    };
 
     let input;
     if (isConfigured) {
@@ -281,17 +274,7 @@ export function Scheduling() {
             const overlap = findMeetings(cohort, config)
             const mainMeeting = pickATime(overlap, config)
 
-            const multiplier = 1 / durationToHours(config.increment)
-            const [startCoord, endCoord] = unparseInterval(mainMeeting, multiplier)
-
-            let start = new Date(monday.getTime())
-            start.setDate(start.getDate() + startCoord.day)
-            start.setUTCHours(startCoord.hour)
-            start.setUTCMinutes(startCoord.minute)
-            let end = new Date(monday.getTime())
-            end.setDate(end.getDate() + endCoord.day)
-            end.setUTCHours(endCoord.hour)
-            end.setUTCMinutes(endCoord.minute)
+            const [start, end] = getDates(mainMeeting, monday, config)
 
             return {
                 fields: {
