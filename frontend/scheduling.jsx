@@ -3,6 +3,7 @@ import { Combination, combination } from "../lib/combinatorics.js";
 import {
     ViewPickerSynced,
     FormField,
+    Select,
     InputSynced,
     Button,
     useGlobalConfig,
@@ -14,6 +15,12 @@ import {
 import { parseTimeAvString2, wait, prettyPrintIntervals, unparseInterval, durationToHours, getDates } from "../lib/util"
 import { solve, solve_dfs, solve_dfs2, findMeetings, pickATime } from "../lib/algorithm.js"
 import { Set } from "immutable";
+
+const algorithms = {
+    0: solve,
+    1: solve_dfs,
+    2: solve_dfs2
+}
 
 function PersonBlob({ name }) {
     return (
@@ -97,6 +104,7 @@ function Solution({ result, config }) {
 
 export var runningGlobal = false
 function Solver({ input, config, acceptFn }) {
+    const globalConfig = useGlobalConfig()
     let [results, setResults] = useState([])
     const addResult = result => {
         if (result.error) {
@@ -165,6 +173,8 @@ function Solver({ input, config, acceptFn }) {
 
     let [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false)
 
+    const solveFn = algorithms[globalConfig.get("algorithm")]
+
     return (
         <div className="space-y-2">
             <div className="flex space-x-2 items-center">
@@ -176,7 +186,7 @@ function Solver({ input, config, acceptFn }) {
                             setConsole("")
                             setRunning(true)
                             runningGlobal = true
-                            addResult(await solve_dfs2(input, config, uilog))
+                            addResult(await solveFn(input, config, uilog))
                             currentResultLast()
                             setRunning(false)
                             runningGlobal = false
@@ -289,6 +299,11 @@ export function Scheduling({ config }) {
         cohortsTable.createRecordsAsync(cohortRecords)
     }
 
+    const algorithmOptions = [
+        { label: "DFS1", value: 0 },
+        { label: "DFS2", value: 1 },
+        { label: "Brute-force", value: 2 },
+    ]
     return (
         <div>
             <div>
@@ -309,11 +324,13 @@ export function Scheduling({ config }) {
                         </FormField>
                     </div>
                     <div className="w-1/2" >
-                        {/* <FormField label="Number of generations">
-                            <InputSynced
-                                type="number"
-                                globalConfigKey="numberOfGenerations" />
-                        </FormField> */}
+                        {<FormField label="Algorithm">
+                            <Select
+                                options={algorithmOptions}
+                                value={globalConfig.get("algorithm")}
+                                onChange={newValue => globalConfig.setAsync("algorithm", newValue)}
+                                width="320px" />
+                        </FormField>}
                     </div>
                 </div>
             </div>
