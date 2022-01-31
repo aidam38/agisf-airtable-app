@@ -49,7 +49,7 @@ function Participant({ record, config }) {
 
     const cohortsPartial = allCohorts.filter(cohort => {
         const timeav2 = cohort.getCellValue(id)
-        if(!timeav2) {
+        if (!timeav2) {
             return false
         }
         return findOverlapGroup([parseTimeAvString2(timeav, config),
@@ -57,7 +57,7 @@ function Participant({ record, config }) {
     })
     const cohortsFull = allCohorts.filter(cohort => {
         const timeav2 = cohort.getCellValue(id)
-        if(!timeav2) {
+        if (!timeav2) {
             return false
         }
         return findMeetingsGroup([parseTimeAvString2(timeav, config),
@@ -73,7 +73,9 @@ function Participant({ record, config }) {
                 <TimeAvWidget timeav={timeav} config={config} />
             </div>
             <div>
-                Full overlap
+                <span className="text-lg mb-1">Full overlap</span>  
+                <span>  </span>
+                <span className="italic">(participant overlaps with cohort for longer than meeting length)</span>
                 <div>
                     {cohortsFull.map(cohort => {
                         return <div className="flex">
@@ -83,7 +85,9 @@ function Participant({ record, config }) {
                         </div>
                     })}
                 </div>
-                Any overlap
+                <span className="text-lg mb-1">Any overlap</span>
+                <span>  </span>
+                <span className="italic">(participants overlaps with cohort in any way)</span>
                 <div>
                     {cohortsPartial.map(cohort => {
                         return <div className="flex">
@@ -119,6 +123,18 @@ function Cohort({ record, config }) {
     const allPeople = participants.concat(facilitator).map(s => parseTimeAvString2(s, config))
 
     const overlap = findMeetingsGroup(allPeople, config)
+    if (overlap.length == 0) {
+        return (
+            <div>
+                <div className="text-xl">
+                    {record.name}
+                </div>
+                <div>
+                    Cohort doesn't have any possible meeting times.
+                </div>
+            </div>
+        )
+    }
     const mainMeeting = pickATime(overlap, config)
     const monday = new Date(globalConfig.get(["config", "startDate"]))
     const [start, end] = getDates(mainMeeting, monday, config)

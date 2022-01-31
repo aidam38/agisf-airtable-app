@@ -224,7 +224,7 @@ function Solver({ input, config, acceptFn }) {
                             {isAcceptDialogOpen &&
                                 <Dialog onClose={() => { }} width="320px">
                                     <div>
-                                        some scary text
+                                        Clicking Accept will create records in the Cohorts table. 
                                     </div>
                                     <Button onClick={() => setIsAcceptDialogOpen(false)}>Cancel</Button>
                                     <Button onClick={() => { setIsAcceptDialogOpen(false); acceptFn(results[currentResult].solution) }}>Accept</Button>

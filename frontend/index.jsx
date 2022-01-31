@@ -58,7 +58,7 @@ function App() {
                     <div className="flex">
                         <ATab icon="shapes" label="Algorithm" />
                         <ATab icon="show1" label="View" />
-                        <ATab icon="caret" label="Test" />
+                        {/* <ATab icon="caret" label="Test" /> */}
                     </div>
                     : <div className="px-2 py-1 text-slate-400">Please configure all settings first</div>}
                 <ATab icon="settings" />
@@ -68,7 +68,7 @@ function App() {
                     <React.Fragment>
                         <Tab.Panel><Scheduling config={config} /></Tab.Panel>
                         <Tab.Panel><ViewWrapper config={config} /></Tab.Panel>
-                        <Tab.Panel><Test /></Tab.Panel>
+                        {/* <Tab.Panel><Test /></Tab.Panel> */}
                     </React.Fragment>}
                 <Tab.Panel><Settings /></Tab.Panel>
             </Tab.Panels>
