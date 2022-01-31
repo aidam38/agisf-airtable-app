@@ -13,14 +13,18 @@ import {
     Dialog
 } from "@airtable/blocks/ui";
 import { parseTimeAvString2, wait, prettyPrintIntervals, unparseInterval, durationToHours, getDates } from "../lib/util"
-import { solve, solve_dfs, solve_dfs2, findMeetings, pickATime } from "../lib/algorithm.js"
+import { solve, solve_dfs, solve_dfs2, findMeetings, pickATime, solve_brute_force } from "../lib/algorithm.js"
 import { Set } from "immutable";
 
 const algorithms = {
     0: solve,
-    1: solve_dfs,
-    2: solve_dfs2
+    1: solve_dfs2
 }
+
+const algorithmOptions = [
+    { label: "Genetic algorithm", value: 0 },
+    { label: "Depth-first search", value: 1 }
+]
 
 function PersonBlob({ name }) {
     return (
@@ -299,11 +303,6 @@ export function Scheduling({ config }) {
         cohortsTable.createRecordsAsync(cohortRecords)
     }
 
-    const algorithmOptions = [
-        { label: "DFS1", value: 0 },
-        { label: "DFS2", value: 1 },
-        { label: "Brute-force", value: 2 },
-    ]
     return (
         <div>
             <div>
